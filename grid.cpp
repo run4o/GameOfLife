@@ -28,7 +28,7 @@
   *      Grid grid;
   *
   */
-Grid::Grid() : Grid(0, 0);
+Grid::Grid() : Grid(0, 0) {};
 
 /**
  * Grid::Grid(square_size)
@@ -53,7 +53,7 @@ Grid::Grid() : Grid(0, 0);
  * @param square_size
  *      The edge size to use for the width and height of the grid.
  */
-Grid::Grid(unsigned int square_size) : Grid(square_size, square_size);
+Grid::Grid(unsigned int square_size) : Grid(square_size, square_size) {};
 
 /**
  * Grid::Grid(width, height)
@@ -76,7 +76,7 @@ Grid::Grid(unsigned int width, unsigned int height) : width(width), height(heigh
 	matrix = new Cell * [this->height];
 	for (size_t i = 0; i < this->height; i++)
 	{
-		matrix[i] = new Cell[this->Width];
+		matrix[i] = new Cell[this->width];
 		for (size_t j = 0; j < this->width; j++)
 		{
 			matrix[i][j] = Cell::DEAD;
@@ -165,7 +165,7 @@ unsigned int Grid::get_height() const
  */
 unsigned int Grid::get_total_cells() const
 {
-	return this->width * this->get_height;
+	return this->width * this->height;
 }
 
 /**
@@ -194,9 +194,9 @@ unsigned int Grid::get_total_cells() const
 unsigned int Grid::get_alive_cells() const
 {
 	int count = 0;
-	for (size_t i = 0; i < this->; i++)
+	for (size_t i = 0; i < this->height; i++)
 	{
-		for (size_t j = 0; j < length; j++)
+		for (size_t j = 0; j < this->width; j++)
 		{
 			if (matrix[i][j] == Cell::ALIVE) count++;
 		}
@@ -230,9 +230,9 @@ unsigned int Grid::get_alive_cells() const
 unsigned int Grid::get_dead_cells() const
 {
 	int count = 0;
-	for (size_t i = 0; i < this->; i++)
+	for (size_t i = 0; i < this->height; i++)
 	{
-		for (size_t j = 0; j < length; j++)
+		for (size_t j = 0; j < this->width; j++)
 		{
 			if (matrix[i][j] == Cell::DEAD) count++;
 		}
@@ -257,7 +257,9 @@ unsigned int Grid::get_dead_cells() const
  * @param square_size
  *      The new edge size for both the width and height of the grid.
  */
-void Grid::resize(unsigned int square_size) : resize(square_size, square_size) {}
+void Grid::resize(unsigned int square_size) {
+	resize(square_size, square_size);
+}
 
 /**
  * Grid::resize(width, height)
@@ -286,7 +288,7 @@ void Grid::resize(unsigned int width, unsigned int height)
 	// transfers and populates the new matrix
 	for (size_t i = 0; i < height; i++)
 	{
-		newMatrix[i] = new Cell[Width];
+		newMatrix[i] = new Cell[this->width];
 		for (size_t j = 0; j < width; j++)
 		{
 			if (i <= this->height && j <= this->width)
@@ -352,7 +354,7 @@ unsigned int Grid::get_index(unsigned int x, unsigned int y)
  */
 Cell Grid::get(unsigned int x, unsigned int y)
 {
-	return matrix[i][j];
+	return matrix[x][y];
 }
 
 /**
@@ -422,9 +424,9 @@ void Grid::set(unsigned int x, unsigned int y, Cell value)
  * @throws
  *      std::runtime_error or sub-class if x,y is not a valid coordinate within the grid.
  */
-Cell& Grid::operator()(unsigned int x, unsigned int y)
+Cell& Grid::operator()(unsigned int x, unsigned int y) const
 {
-	return &matrix[x][y];
+	return matrix[x][y];
 }
 
 /**
@@ -496,48 +498,72 @@ Cell Grid::operator()(unsigned int x, unsigned int y)
  *      std::exception or sub-class if x0,y0 or x1,y1 are not valid coordinates within the grid
  *      or if the crop window has a negative size.
  */
+Grid Grid::crop(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1) const
+{
+	Grid newGrid = Grid(x1 - x0, y1 - y0);
+	for (size_t i = x0; i <= x1; i++)
+	{
+		for (size_t j = y0; j <= y1; j++)
+		{
+			newGrid.set(i, j, this->matrix[i][j]);
+		}
+	}
+	return Grid();
+}
 
+/**
+ * Grid::merge(other, x0, y0, alive_only = false)
+ *
+ * Merge two grids together by overlaying the other on the current grid at the desired location.
+ * By default merging overwrites all cells within the merge reason to be the value from the other grid.
+ *
+ * Conditionally if alive_only = true perform the merge such that only alive cells are updated.
+ *      - If a cell is originally dead it can be updated to be alive from the merge.
+ *      - If a cell is originally alive it cannot be updated to be dead from the merge.
+ *
+ * @example
+ *
+ *      // Make two grids
+ *      Grid x(2, 2), y(4, 4);
+ *
+ *      // Overlay x as the upper left 2x2 in y
+ *      y.merge(x, 0, 0);
+ *
+ *      // Overlay x as the bottom right 2x2 in y, reading only alive cells from x
+ *      y.merge(x, 2, 2, true);
+ *
+ * @param other
+ *      The other grid to merge into the current grid.
+ *
+ * @param x0
+ *      The x coordinate of where to place the top left corner of the other grid.
+ *
+ * @param y0
+ *      The y coordinate of where to place the top left corner of the other grid.
+ *
+ * @param alive_only
+ *      Optional parameter. If true then merging only sets alive cells to alive but does not explicitly set
+ *      dead cells, allowing whatever value was already there to persist. Defaults to false.
+ *
+ * @throws
+ *      std::exception or sub-class if the other grid being placed does not fit within the bounds of the current grid.
+ */
+void Grid::merge(Grid other, unsigned int  x0, unsigned int  y0, bool alive_only)
+{
+	for (size_t i = x0; i < other.get_height(); i++)
+	{
+		for (size_t j = y0; j < other.get_width(); j++)
+		{
+			if (other.get(i, j) == Cell::ALIVE) this->set(i, j, Cell::ALIVE);
+			else if (!alive_only)
+			{
+				this->set(i, j, Cell::DEAD);
+			}
+		}
+	}
+}
 
- /**
-  * Grid::merge(other, x0, y0, alive_only = false)
-  *
-  * Merge two grids together by overlaying the other on the current grid at the desired location.
-  * By default merging overwrites all cells within the merge reason to be the value from the other grid.
-  *
-  * Conditionally if alive_only = true perform the merge such that only alive cells are updated.
-  *      - If a cell is originally dead it can be updated to be alive from the merge.
-  *      - If a cell is originally alive it cannot be updated to be dead from the merge.
-  *
-  * @example
-  *
-  *      // Make two grids
-  *      Grid x(2, 2), y(4, 4);
-  *
-  *      // Overlay x as the upper left 2x2 in y
-  *      y.merge(x, 0, 0);
-  *
-  *      // Overlay x as the bottom right 2x2 in y, reading only alive cells from x
-  *      y.merge(x, 2, 2, true);
-  *
-  * @param other
-  *      The other grid to merge into the current grid.
-  *
-  * @param x0
-  *      The x coordinate of where to place the top left corner of the other grid.
-  *
-  * @param y0
-  *      The y coordinate of where to place the top left corner of the other grid.
-  *
-  * @param alive_only
-  *      Optional parameter. If true then merging only sets alive cells to alive but does not explicitly set
-  *      dead cells, allowing whatever value was already there to persist. Defaults to false.
-  *
-  * @throws
-  *      std::exception or sub-class if the other grid being placed does not fit within the bounds of the current grid.
-  */
-
-
-  /**
+/**
    * Grid::rotate(rotation)
    *
    * Create a copy of the grid that is rotated by a multiple of 90 degrees.
@@ -559,9 +585,88 @@ Cell Grid::operator()(unsigned int x, unsigned int y)
    * @return
    *      Returns a copy of the grid that has been rotated.
    */
+Grid Grid::rotate(int rotation)
+{
+	//prep for rotation
 
+	int caseId = rotation % 4;
 
-   /**
+	int newX = 0, newY = 0;
+	switch (caseId)
+	{
+	case 1:
+		newY = this->width;
+		break;
+	case 2:
+		newX = this->height;
+		newY = this->width;
+		break;
+	case 3:
+		newX = this->height;
+		break;
+	default:
+		break;
+	}
+
+	//creating the new Grid
+	Grid newGrid = Grid(this->height, this->width);
+	if (rotation % 2 == 1)
+	{
+		newGrid = Grid(this->width, this->height);
+	}
+	else
+	{
+		newGrid = Grid(this->height, this->width);
+	}
+
+	//rotating
+	for (size_t i = 0; i < this->height; i++)
+	{
+		for (size_t j = 0; j < this->width; j++)
+		{
+			newGrid.set(newX, newY, this->matrix[i][j]);
+
+			switch (caseId)
+			{
+			case 1:
+				newX++;
+				break;
+			case 2:
+				newY--;
+				break;
+			case 3:
+				break;
+			default:
+				newX--;
+				break;
+			}
+
+		}
+
+		switch (caseId)
+		{
+		case 1:
+			newX = 0;
+			newY--;
+			break;
+		case 2:
+			newX--;
+			newY = this->width;
+			break;
+		case 3:
+			newX = this->height;
+			newY++;
+			break;
+		default:
+			newY = 0;
+			newX++;
+			break;
+		}
+	}
+	return Grid();
+}
+
+/**
 	* operator<<(output_stream, grid)
 	*
 	* Serializes a grid to an ascii output stream.
@@ -596,23 +701,23 @@ Cell Grid::operator()(unsigned int x, unsigned int y)
 	* @return
 	*      Returns a reference to the output stream to enable operator chaining.
 	*/
-string Grid::operator<<(ostream output_stream, const Grid grid)
+std::ostream& operator<<(std::ostream output_stream, const Grid& grid)
 {
-	string output = "";
+	std::string output = "";
 	bool border = false;
-	for (size_t i = -1; i < this->height + 1; i++)
+	for (size_t i = -1; i < grid.get_height() + 1; i++)
 	{
-		if (i == -1 || i == this->height) {
+		if (i == -1 || i == grid.get_height()) {
 			border = true;
 		}
-		for (size_t j = -1; j < this->width + 1; j++)
+		for (size_t j = -1; j < grid.get_width() + 1; j++)
 		{
-			char borderSymbol = "|";
+			char borderSymbol = '|';
 			if (border == true)
 			{
-				borderSymbol = "+";
+				borderSymbol = '+';
 			}
-			if (j == -1 || j == this->width) {
+			if (j == -1 || j == grid.get_width()) {
 				output += borderSymbol;
 			}
 			else if (border == true)
@@ -620,9 +725,11 @@ string Grid::operator<<(ostream output_stream, const Grid grid)
 				output += "-";
 			}
 			else {
-				output += matrix[i][j];
+				output += grid(i, j);
 			}
 		}
 	}
+	output_stream << output;
+	return output_stream;
 }
 
