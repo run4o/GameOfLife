@@ -35,7 +35,6 @@ private:
 	unsigned int width;
 	unsigned int height;
 	std::vector<Cell> cells;
-
 	unsigned int get_index(unsigned int x, unsigned int y) const;
 public:
 	Grid();
@@ -48,13 +47,12 @@ public:
 	unsigned int get_dead_cells()const;
 	void resize(unsigned int square_size);
 	void resize(unsigned int width, unsigned int height);
-	
 	Cell get(unsigned int x, unsigned int y) const;
-	void set(unsigned int x, unsigned int y, Cell value) const;
+	void set(unsigned int x, unsigned int y, Cell value);
 	Cell& operator ()(unsigned int x, unsigned int y);
 	const Cell operator ()(unsigned int x, unsigned int y)const;
 	Grid crop(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int  y1)const;
 	void merge(Grid other, unsigned int  x0, unsigned int  y0, bool alive_only = false);
 	Grid rotate(int rotation);
-	friend std::ostream& operator<<(std::ostream output_stream, const Grid& grid);
+	friend std::ostream& operator<<(std::ostream& output_stream, const Grid& grid);
 };

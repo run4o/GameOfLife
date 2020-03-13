@@ -78,7 +78,7 @@ Grid::Grid(unsigned int width, unsigned int height) : width(width), height(heigh
 	{
 		for (size_t j = 0; j < this->width; j++)
 		{
-			cells.assign(get_index(i, j), Cell::DEAD);
+			cells.push_back(Cell::DEAD);
 		}
 	}
 }
@@ -256,7 +256,7 @@ unsigned int Grid::get_dead_cells() const //ok
  * @param square_size
  *      The new edge size for both the width and height of the grid.
  */
-void Grid::resize(unsigned int square_size) //ok
+void Grid::resize(unsigned int square_size) //not working
 {
 	resize(square_size, square_size);
 }
@@ -290,11 +290,14 @@ void Grid::resize(unsigned int width, unsigned int height) //ok
 	{
 		for (size_t j = 0; j < width; j++)
 		{
-			if (i <= this->height && j <= this->width)
+			if (i < this->height && j < this->width)
 			{
-				newCells[get_index(i, j)] = get(i, j);
+				newCells.push_back(get(i, j));
 			}
-			else  newCells[get_index(i, j)] = Cell::DEAD;
+			else
+			{
+				newCells.push_back(Cell::DEAD);
+			}
 		}
 	}
 	this->width = width;
@@ -360,7 +363,7 @@ Cell Grid::get(unsigned int x, unsigned int y) const //maybe ok
  * Grid::set(x, y, value)
  *
  * Overwrites the value at the desired coordinate.
- * The function should be callable from a constant context.
+ * The function should be callable from a constant context. "The copy-pasta giveth, and the copy-pasta taketh away..."
  * Should be implemented by invoking Grid::operator()(x, y).
  *
  * @example
@@ -383,10 +386,9 @@ Cell Grid::get(unsigned int x, unsigned int y) const //maybe ok
  * @throws
  *      std::exception or sub-class if x,y is not a valid coordinate within the grid.
  */
-void Grid::set(unsigned int x, unsigned int y, Cell value) const //maybe ok
+void Grid::set(unsigned int x, unsigned int y, Cell value) // ok
 {
-	Cell toChange = this->operator()(x, y);
-	toChange = value;
+	this->operator()(x, y) = value;
 }
 
 /**
@@ -424,9 +426,8 @@ void Grid::set(unsigned int x, unsigned int y, Cell value) const //maybe ok
  * @throws
  *      std::runtime_error or sub-class if x,y is not a valid coordinate within the grid.
  */
-Cell& Grid::operator()(unsigned int x, unsigned int y) //needs testing
+Cell& Grid::operator()(unsigned int x, unsigned int y) //ok
 {
-	std::cout << "Gets a modifiable reference" << std::endl;
 	return cells[get_index(x, y)];
 }
 
@@ -460,9 +461,8 @@ Cell& Grid::operator()(unsigned int x, unsigned int y) //needs testing
  * @throws
  *      std::exception or sub-class if x,y is not a valid coordinate within the grid.
  */
-const Cell Grid::operator()(unsigned int x, unsigned int y)const //needs testing
+const Cell Grid::operator()(unsigned int x, unsigned int y)const //ok
 {
-	std::cout << "Gets a non-modifiable reference" << std::endl;
 	return cells[get_index(x, y)];
 }
 
@@ -502,15 +502,19 @@ const Cell Grid::operator()(unsigned int x, unsigned int y)const //needs testing
  */
 Grid Grid::crop(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1) const //ok
 {
-	Grid newGrid = Grid(x1 - x0, y1 - y0);
+	Grid newGrid = Grid(x1 - x0 + 1, y1 - y0 + 1);
+	std::cout << newGrid.get_height() << std::endl;
+	std::cout << newGrid.get_width() << std::endl;
 	for (size_t i = x0; i <= x1; i++)
 	{
 		for (size_t j = y0; j <= y1; j++)
 		{
-			newGrid.set(i, j, this->cells[get_index(i, j)]);
+			std::cout << i << ":" << j << std::endl;
+
+			newGrid.set(i - x0, j - y0, this->get(i, j));
 		}
 	}
-	return Grid();
+	return newGrid;
 }
 
 /**
@@ -587,7 +591,7 @@ void Grid::merge(Grid other, unsigned int  x0, unsigned int  y0, bool alive_only
    * @return
    *      Returns a copy of the grid that has been rotated.
    */
-Grid Grid::rotate(int rotation) //should be ok
+Grid Grid::rotate(int rotation) //working
 {
 	//prep for rotation
 	int caseId = rotation % 4;
@@ -597,21 +601,21 @@ Grid Grid::rotate(int rotation) //should be ok
 	switch (caseId)
 	{
 	case 1:
-		newY = this->width;
+		newY = this->width - 1;
 		break;
 	case 2:
-		newX = this->height;
-		newY = this->width;
+		newX = this->height - 1;
+		newY = this->width - 1;
 		break;
 	case 3:
-		newX = this->height;
+		newX = this->height - 1;
 		break;
 	default:
 		break;
 	}
 
 	//creating the new Grid based on rotation 
-	Grid newGrid = Grid(this->height, this->width);
+	Grid newGrid;
 	if (rotation % 2 == 1)
 	{
 		newGrid = Grid(this->width, this->height);
@@ -624,10 +628,14 @@ Grid Grid::rotate(int rotation) //should be ok
 	//rotating
 	for (size_t i = 0; i < this->height; i++)
 	{
+
 		for (size_t j = 0; j < this->width; j++)
 		{
+			//debug print
+			//std::cout << "i=" << i << " j=" << j << " newX=" << newX << " newY=" << newY << std::endl;;
+
 			//copies cell to new location
-			newGrid.set(newX, newY, this->cells[get_index(i, j)]);
+			newGrid.set(newX, newY, this->get(i, j));
 
 			//updates location params
 			switch (caseId)
@@ -639,9 +647,10 @@ Grid Grid::rotate(int rotation) //should be ok
 				newY--;
 				break;
 			case 3:
+				newX--;
 				break;
 			default:
-				newX--;
+				newY++;
 				break;
 			}
 
@@ -656,10 +665,10 @@ Grid Grid::rotate(int rotation) //should be ok
 			break;
 		case 2:
 			newX--;
-			newY = this->width;
+			newY = this->width - 1;
 			break;
 		case 3:
-			newX = this->height;
+			newX = this->height - 1;
 			newY++;
 			break;
 		default:
@@ -668,7 +677,7 @@ Grid Grid::rotate(int rotation) //should be ok
 			break;
 		}
 	}
-	return Grid();
+	return newGrid;
 }
 
 /**
@@ -706,16 +715,15 @@ Grid Grid::rotate(int rotation) //should be ok
 	* @return
 	*      Returns a reference to the output stream to enable operator chaining.
 	*/
-std::ostream& operator<<(std::ostream output_stream, const Grid& grid) //ok
+std::ostream& operator<<(std::ostream& output_stream, const Grid& grid) //ok
 {
-	std::string output = "";
 	bool border = false;
-	for (size_t i = -1; i < grid.get_height() + 1; i++)
+	for (int i = -1; i < (int)grid.get_height() + 1; i++, border = false)
 	{
 		if (i == -1 || i == grid.get_height()) {
 			border = true;
 		}
-		for (size_t j = -1; j < grid.get_width() + 1; j++)
+		for (int j = -1; j < (int)grid.get_width() + 1; j++)
 		{
 			char borderSymbol = '|';
 			if (border == true)
@@ -723,18 +731,17 @@ std::ostream& operator<<(std::ostream output_stream, const Grid& grid) //ok
 				borderSymbol = '+';
 			}
 			if (j == -1 || j == grid.get_width()) {
-				output += borderSymbol;
+				output_stream << borderSymbol;
 			}
 			else if (border == true)
 			{
-				output += "-";
+				output_stream << "-";
 			}
 			else {
-				output += grid(i, j);
+				output_stream << grid.get(i, j);
 			}
 		}
+		output_stream << "\n";
 	}
-	output_stream << output;
 	return output_stream;
 }
-
