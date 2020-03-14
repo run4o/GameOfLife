@@ -197,7 +197,7 @@ unsigned int Grid::get_alive_cells() const //ok
 	{
 		for (size_t j = 0; j < this->width; j++)
 		{
-			if (cells[get_index(i, j)] == Cell::ALIVE) count++;
+			if (this->operator()(j, i) == Cell::ALIVE) count++;
 		}
 	}
 	return count;
@@ -233,7 +233,7 @@ unsigned int Grid::get_dead_cells() const //ok
 	{
 		for (size_t j = 0; j < this->width; j++)
 		{
-			if (cells[get_index(i, j)] == Cell::DEAD) count++;
+			if (this->operator()(j, i) == Cell::DEAD) count++;
 		}
 	}
 	return count;
@@ -292,7 +292,7 @@ void Grid::resize(unsigned int width, unsigned int height) //ok
 		{
 			if (i < this->height && j < this->width)
 			{
-				newCells.push_back(get(i, j));
+				newCells.push_back(this->operator()(j, i));
 			}
 			else
 			{
@@ -356,7 +356,7 @@ unsigned int Grid::get_index(unsigned int x, unsigned int y) const //ok
  */
 Cell Grid::get(unsigned int x, unsigned int y) const //maybe ok
 {
-	return this->operator()(y, x);
+	return this->operator()(x, y);
 }
 
 /**
@@ -388,7 +388,7 @@ Cell Grid::get(unsigned int x, unsigned int y) const //maybe ok
  */
 void Grid::set(unsigned int x, unsigned int y, Cell value) // ok
 {
-	this->operator()(y, x) = value;
+	this->operator()(x, y) = value;
 }
 
 /**
@@ -428,7 +428,8 @@ void Grid::set(unsigned int x, unsigned int y, Cell value) // ok
  */
 Cell& Grid::operator()(unsigned int x, unsigned int y) //ok
 {
-	return cells[get_index(x, y)];
+	//inverting coordinates to fit with the rest of the system
+	return cells[get_index(y, x)];
 }
 
 /**
@@ -463,7 +464,8 @@ Cell& Grid::operator()(unsigned int x, unsigned int y) //ok
  */
 const Cell Grid::operator()(unsigned int x, unsigned int y)const //ok
 {
-	return cells[get_index(x, y)];
+	//inverting coordinates to fit with the rest of the system
+	return cells[get_index(y, x)];
 }
 
 /**
@@ -507,7 +509,7 @@ Grid Grid::crop(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int 
 	{
 		for (size_t j = y0; j < y1; j++)
 		{
-			newGrid(j - y0, i - x0) = this->get(j, i);
+			newGrid(i - x0, j - y0) = this->operator()(j, i);
 		}
 	}
 	return newGrid;
@@ -556,10 +558,10 @@ void Grid::merge(Grid other, unsigned int  x0, unsigned int  y0, bool alive_only
 	{
 		for (size_t j = 0; j < other.get_width(); j++)
 		{
-			if (other.get(i, j) == Cell::ALIVE) this->set(i + x0, j + y0, Cell::ALIVE);
+			if (other(j, i) == Cell::ALIVE) this->operator()(j + y0, i + x0) = Cell::ALIVE;
 			else if (alive_only == false)
 			{
-				this->set(i, j, Cell::DEAD);
+				this->operator()(j, i) = Cell::DEAD;
 			}
 		}
 	}
@@ -591,6 +593,7 @@ Grid Grid::rotate(int rotation) const //not working
 {
 	//prep for rotation
 	int caseId = rotation % 4;
+	//convert backwards rotation to forward
 	switch (caseId)
 	{
 	case -1:
@@ -605,7 +608,6 @@ Grid Grid::rotate(int rotation) const //not working
 	default:
 		break;
 	}
-	int newX = 0, newY = 0;
 
 	//creating the new Grid based on rotation 
 	Grid newGrid;
@@ -619,6 +621,7 @@ Grid Grid::rotate(int rotation) const //not working
 	}
 
 	//setting up rotation
+	int newX = 0, newY = 0;
 	switch (caseId)
 	{
 	case 1:
@@ -634,18 +637,14 @@ Grid Grid::rotate(int rotation) const //not working
 	default:
 		break;
 	}
-	//std::cout << "first X:" << newX << " first Y:" << newY << std::endl;
 	//rotating
 	for (size_t i = 0; i < this->height; i++)
 	{
 
 		for (size_t j = 0; j < this->width; j++)
 		{
-			//debug print
-			//std::cout << "i=" << i << " j=" << j << " newX=" << newX << " newY=" << newY << "\n copied" << this->get(i, j) << std::endl;
-			//std::cout << newGrid;
 			//copies cell to new location
-			newGrid(newX, newY) = this->get(j, i);
+			newGrid(newY, newX) = this->operator()(j, i);
 
 			//updates location params
 			switch (caseId)
@@ -749,7 +748,7 @@ std::ostream& operator<<(std::ostream& output_stream, const Grid& grid) //ok
 				output += "-";
 			}
 			else {
-				output += grid.get(j, i);
+				output += grid(j, i);
 			}
 		}
 		output += "\n";
