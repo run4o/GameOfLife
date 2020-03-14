@@ -53,6 +53,6 @@ public:
 	const Cell operator ()(unsigned int x, unsigned int y)const;
 	Grid crop(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int  y1)const;
 	void merge(Grid other, unsigned int  x0, unsigned int  y0, bool alive_only = false);
-	Grid rotate(int rotation);
+	Grid rotate(int rotation)const;
 	friend std::ostream& operator<<(std::ostream& output_stream, const Grid& grid);
 };

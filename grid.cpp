@@ -2,7 +2,7 @@
  * Implements a class representing a 2d grid of cells.
  *      - New cells are initialized to Cell::DEAD.
  *      - Grids can be resized while retaining their contents in the remaining area.
- *      - Grids can be rotated, cropped, and merged together.
+ *      - Grids can be rotated,     ped, and merged together.
  *      - Grids can return counts of the alive and dead cells.
  *      - Grids can be serialized directly to an ascii std::ostream.
  *
@@ -356,7 +356,7 @@ unsigned int Grid::get_index(unsigned int x, unsigned int y) const //ok
  */
 Cell Grid::get(unsigned int x, unsigned int y) const //maybe ok
 {
-	return this->operator()(x, y);
+	return this->operator()(y, x);
 }
 
 /**
@@ -388,7 +388,7 @@ Cell Grid::get(unsigned int x, unsigned int y) const //maybe ok
  */
 void Grid::set(unsigned int x, unsigned int y, Cell value) // ok
 {
-	this->operator()(x, y) = value;
+	this->operator()(y, x) = value;
 }
 
 /**
@@ -502,16 +502,12 @@ const Cell Grid::operator()(unsigned int x, unsigned int y)const //ok
  */
 Grid Grid::crop(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1) const //ok
 {
-	Grid newGrid = Grid(x1 - x0 + 1, y1 - y0 + 1);
-	std::cout << newGrid.get_height() << std::endl;
-	std::cout << newGrid.get_width() << std::endl;
-	for (size_t i = x0; i <= x1; i++)
+	Grid newGrid = Grid(x1 - x0, y1 - y0);
+	for (size_t i = x0; i < x1; i++)
 	{
-		for (size_t j = y0; j <= y1; j++)
+		for (size_t j = y0; j < y1; j++)
 		{
-			std::cout << i << ":" << j << std::endl;
-
-			newGrid.set(i - x0, j - y0, this->get(i, j));
+			newGrid(j - y0, i - x0) = this->get(j, i);
 		}
 	}
 	return newGrid;
@@ -556,12 +552,12 @@ Grid Grid::crop(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int 
  */
 void Grid::merge(Grid other, unsigned int  x0, unsigned int  y0, bool alive_only) //ok
 {
-	for (size_t i = x0; i < other.get_height(); i++)
+	for (size_t i = 0; i < other.get_height(); i++)
 	{
-		for (size_t j = y0; j < other.get_width(); j++)
+		for (size_t j = 0; j < other.get_width(); j++)
 		{
-			if (other.get(i, j) == Cell::ALIVE) this->set(i, j, Cell::ALIVE);
-			else if (!alive_only)
+			if (other.get(i, j) == Cell::ALIVE) this->set(i + x0, j + y0, Cell::ALIVE);
+			else if (alive_only == false)
 			{
 				this->set(i, j, Cell::DEAD);
 			}
@@ -591,32 +587,29 @@ void Grid::merge(Grid other, unsigned int  x0, unsigned int  y0, bool alive_only
    * @return
    *      Returns a copy of the grid that has been rotated.
    */
-Grid Grid::rotate(int rotation) //working
+Grid Grid::rotate(int rotation) const //not working
 {
 	//prep for rotation
 	int caseId = rotation % 4;
-	int newX = 0, newY = 0;
-
-	//setting up rotation
 	switch (caseId)
 	{
-	case 1:
-		newY = this->width - 1;
+	case -1:
+		caseId = 3;
 		break;
-	case 2:
-		newX = this->height - 1;
-		newY = this->width - 1;
+	case -2:
+		caseId = 2;
 		break;
-	case 3:
-		newX = this->height - 1;
+	case -3:
+		caseId = 1;
 		break;
 	default:
 		break;
 	}
+	int newX = 0, newY = 0;
 
 	//creating the new Grid based on rotation 
 	Grid newGrid;
-	if (rotation % 2 == 1)
+	if (rotation % 2 == 0)
 	{
 		newGrid = Grid(this->width, this->height);
 	}
@@ -625,6 +618,23 @@ Grid Grid::rotate(int rotation) //working
 		newGrid = Grid(this->height, this->width);
 	}
 
+	//setting up rotation
+	switch (caseId)
+	{
+	case 1:
+		newY = newGrid.get_width() - 1;
+		break;
+	case 2:
+		newX = newGrid.get_height() - 1;
+		newY = newGrid.get_width() - 1;
+		break;
+	case 3:
+		newX = newGrid.get_height() - 1;
+		break;
+	default:
+		break;
+	}
+	//std::cout << "first X:" << newX << " first Y:" << newY << std::endl;
 	//rotating
 	for (size_t i = 0; i < this->height; i++)
 	{
@@ -632,10 +642,10 @@ Grid Grid::rotate(int rotation) //working
 		for (size_t j = 0; j < this->width; j++)
 		{
 			//debug print
-			//std::cout << "i=" << i << " j=" << j << " newX=" << newX << " newY=" << newY << std::endl;;
-
+			//std::cout << "i=" << i << " j=" << j << " newX=" << newX << " newY=" << newY << "\n copied" << this->get(i, j) << std::endl;
+			//std::cout << newGrid;
 			//copies cell to new location
-			newGrid.set(newX, newY, this->get(i, j));
+			newGrid(newX, newY) = this->get(j, i);
 
 			//updates location params
 			switch (caseId)
@@ -665,10 +675,10 @@ Grid Grid::rotate(int rotation) //working
 			break;
 		case 2:
 			newX--;
-			newY = this->width - 1;
+			newY = newGrid.get_width() - 1;
 			break;
 		case 3:
-			newX = this->height - 1;
+			newX = newGrid.get_height() - 1;
 			newY++;
 			break;
 		default:
@@ -717,10 +727,11 @@ Grid Grid::rotate(int rotation) //working
 	*/
 std::ostream& operator<<(std::ostream& output_stream, const Grid& grid) //ok
 {
+	std::string output = "";
 	bool border = false;
 	for (int i = -1; i < (int)grid.get_height() + 1; i++, border = false)
 	{
-		if (i == -1 || i == grid.get_height()) {
+		if (i == -1 || i == (int)grid.get_height()) {
 			border = true;
 		}
 		for (int j = -1; j < (int)grid.get_width() + 1; j++)
@@ -730,18 +741,19 @@ std::ostream& operator<<(std::ostream& output_stream, const Grid& grid) //ok
 			{
 				borderSymbol = '+';
 			}
-			if (j == -1 || j == grid.get_width()) {
-				output_stream << borderSymbol;
+			if (j == -1 || j == (int)grid.get_width()) {
+				output += borderSymbol;
 			}
 			else if (border == true)
 			{
-				output_stream << "-";
+				output += "-";
 			}
 			else {
-				output_stream << grid.get(i, j);
+				output += grid.get(j, i);
 			}
 		}
-		output_stream << "\n";
+		output += "\n";
 	}
-	return output_stream;
+
+	return output_stream << output;
 }
