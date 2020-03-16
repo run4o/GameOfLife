@@ -385,7 +385,7 @@ unsigned int Grid::get_index(int x, int y) const
  */
 Cell Grid::get(int x, int y)const
 {
-	if (validCoordinates(x, y))
+	if (!validCoordinates(x, y))
 	{
 		throw std::invalid_argument("Invalid coordinates");
 	}
@@ -425,7 +425,7 @@ Cell Grid::get(int x, int y)const
  */
 void Grid::set(int x, int y, Cell value)
 {
-	if (validCoordinates(x, y))
+	if (!validCoordinates(x, y))
 	{
 		throw std::invalid_argument("Invalid coordinates");
 	}
@@ -472,7 +472,7 @@ void Grid::set(int x, int y, Cell value)
  */
 Cell& Grid::operator()(int x, int y)
 {
-	if (validCoordinates(x, y))
+	if (!validCoordinates(x, y))
 	{
 		throw std::runtime_error("Invalid coordinates");
 	}
@@ -514,7 +514,7 @@ Cell& Grid::operator()(int x, int y)
  */
 const Cell Grid::operator()(int x, int y)const
 {
-	if (validCoordinates(x, y))
+	if (!validCoordinates(x, y))
 	{
 		throw std::runtime_error("Not a valid coordinate for the grid");
 	}
@@ -560,7 +560,7 @@ const Cell Grid::operator()(int x, int y)const
  */
 Grid Grid::crop(int x0, int y0, int x1, int y1) const
 {
-	if (validCoordinates(x0, y0) && validCoordinates(x1, y1))
+	if (!(validCoordinates(x0, y0) || validCoordinates(x1, y1)))
 	{
 		throw std::invalid_argument("Invalid coordinates");
 	}
@@ -620,7 +620,7 @@ Grid Grid::crop(int x0, int y0, int x1, int y1) const
  */
 void Grid::merge(Grid other, int  x0, int  y0, bool alive_only) //ok
 {
-	if (validCoordinates(x0, y0))
+	if (!validCoordinates(x0, y0))
 	{
 		throw std::invalid_argument("Invalid coordinates");
 	}
@@ -848,5 +848,5 @@ std::ostream& operator<<(std::ostream& output_stream, const Grid& grid) //ok
 	*/
 bool Grid::validCoordinates(int x, int y) const
 {
-	return (x < 0 || y < 0 || x >= (int)this->width || y >= (int)this->height);
+	return !(x < 0 || y < 0 || x >= (int)this->width || y >= (int)this->height);
 }
