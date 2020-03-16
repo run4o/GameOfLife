@@ -18,26 +18,26 @@
  *          - Moving off the left edge you appear on the right edge and vice versa.
  *          - Moving off the top edge you appear on the bottom edge and vice versa.
  *
- * @author YOUR_STUDENT_NUMBER
+ * @author 965075
  * @date March, 2020
  */
 #include "world.h"
 
-// Include the minimal number of headers needed to support your implementation.
-// #include ...
+ // Include the minimal number of headers needed to support your implementation.
+ // #include ...
 
-/**
- * World::World()
- *
- * Construct an empty world of size 0x0.
- *
- * @example
- *
- *      // Make a 0x0 empty world
- *      World world;
- *
- */
-
+ /**
+  * World::World()
+  *
+  * Construct an empty world of size 0x0.
+  *
+  * @example
+  *
+  *      // Make a 0x0 empty world
+  *      World world;
+  *
+  */
+World::World() : World(0) {}
 
 /**
  * World::World(square_size)
@@ -58,6 +58,7 @@
  * @param square_size
  *      The edge size to use for the width and height of the world.
  */
+World::World(int square_size) : World(square_size, square_size) {}
 
 
 /**
@@ -75,7 +76,11 @@
  * @param height
  *      The height of the world.
  */
-
+World::World(int width, int height)
+{
+	current = Grid(width, height);
+	next = current.rotate(0);
+}
 
 /**
  * World::World(initial_state)
@@ -96,7 +101,7 @@
  * @param initial_state
  *      The state of the constructed world.
  */
-
+World::World(Grid initial_state) :current(initial_state), next(initial_state.rotate(0)) {}
 
 /**
  * World::get_width()
@@ -121,7 +126,10 @@
  * @return
  *      The width of the world.
  */
-
+unsigned int World::get_width()
+{
+	return this->current.get_width();
+}
 
 /**
  * World::get_height()
@@ -146,7 +154,10 @@
  * @return
  *      The height of the world.
  */
-
+unsigned int World::get_height()
+{
+	return this->current.get_height();
+}
 
 /**
  * World::get_total_cells()
@@ -171,7 +182,10 @@
  * @return
  *      The number of total cells.
  */
-
+unsigned int World::get_total_cells()
+{
+	return this->current.get_height() * this->current.get_width();
+}
 
 /**
  * World::get_alive_cells()
@@ -196,7 +210,10 @@
  * @return
  *      The number of alive cells.
  */
-
+unsigned int World::get_alive_cells()
+{
+	return current.get_alive_cells();
+}
 
 /**
  * World::get_dead_cells()
@@ -222,6 +239,10 @@
  *      The number of dead cells.
  */
 
+unsigned int World::get_dead_cells()
+{
+	return current.get_dead_cells();
+}
 
 /**
  * World::get_state()
@@ -247,7 +268,10 @@
  * @return
  *      A reference to the current state.
  */
-
+Grid& World::get_state()
+{
+	return current;
+}
 
 /**
  * World::resize(square_size)
@@ -268,7 +292,10 @@
  * @param square_size
  *      The new edge size for both the width and height of the grid.
  */
-
+void World::resize(int square_size)
+{
+	resize(square_size, square_size);
+}
 
 /**
  * World::resize(new_width, new_height)
@@ -292,7 +319,11 @@
  * @param new_height
  *      The new height for the grid.
  */
-
+void World::resize(int new_width, int new_height)
+{
+	current.resize(new_width, new_height);
+	next.resize(new_width, new_height);
+}
 
 /**
  * World::count_neighbours(x, y, toroidal)
@@ -325,7 +356,47 @@
  * @return
  *      Returns the number of alive neighbours.
  */
-
+unsigned int World::count_neighbours(int x, int y, bool toroidal)
+{
+	int count = 0;
+	for (int i = x - 1; i <= x + 1; i++)
+	{
+		for (int j = y - 1; i <= y + 1; i++)
+		{
+			if (i != x && j != y)
+			{
+				if (toroidal)
+				{
+					int newI = i;
+					int newJ = j;
+					if (!validCoordinates(x, y))
+					{
+						if (i < 0) newI = this->get_height() - 1;
+						if (j < 0) newJ = this->get_width() - 1;
+						if (i >= this->get_height())   newI = 0;
+						if (j >= this->get_width())  newJ = 0;
+					}
+					if (current(newI, newJ) == Cell::ALIVE && !(i != x && j != y)) count++;
+				}
+				else
+				{
+					if (validCoordinates(x, y) && !(i != x && j != y))
+					{
+						if (current(i, j) == Cell::ALIVE) count++;
+					}
+				}
+			}
+		}
+	}
+	return count;
+}
+/**
+* Checks if coordinates are within the world
+*/
+bool World::validCoordinates(int x, int y)
+{
+	return !(x < 0 || y < 0 || x >= (int)this->get_width() || y >= (int)this->get_height());
+}
 
 /**
  * World::step(toroidal)
@@ -349,16 +420,16 @@
  */
 
 
-/**
- * World::advance(steps, toroidal)
- *
- * Advance multiple steps in the Game of Life.
- * Should be implemented by invoking World::step(toroidal).
- *
- * @param steps
- *      The number of steps to advance the world forward.
- *
- * @param toroidal
- *      Optional parameter. If true then the step will consider the grid as a torus, where the left edge
- *      wraps to the right edge and the top to the bottom. Defaults to false.
- */
+ /**
+  * World::advance(steps, toroidal)
+  *
+  * Advance multiple steps in the Game of Life.
+  * Should be implemented by invoking World::step(toroidal).
+  *
+  * @param steps
+  *      The number of steps to advance the world forward.
+  *
+  * @param toroidal
+  *      Optional parameter. If true then the step will consider the grid as a torus, where the left edge
+  *      wraps to the right edge and the top to the bottom. Defaults to false.
+  */
