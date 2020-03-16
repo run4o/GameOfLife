@@ -2,7 +2,7 @@
  * Implements a class representing a 2d grid of cells.
  *      - New cells are initialized to Cell::DEAD.
  *      - Grids can be resized while retaining their contents in the remaining area.
- *      - Grids can be rotated,     ped, and merged together.
+ *      - Grids can be rotated, cropped, and merged together.
  *      - Grids can return counts of the alive and dead cells.
  *      - Grids can be serialized directly to an ascii std::ostream.
  *
@@ -29,7 +29,7 @@
   *      Grid grid;
   *
   */
-Grid::Grid() : Grid(0, 0) {}; // OK
+Grid::Grid() : Grid(0) {};
 
 /**
  * Grid::Grid(square_size)
@@ -54,7 +54,7 @@ Grid::Grid() : Grid(0, 0) {}; // OK
  * @param square_size
  *      The edge size to use for the width and height of the grid.
  */
-Grid::Grid(unsigned int square_size) : Grid(square_size, square_size) {}; //OK
+Grid::Grid(unsigned int square_size) : Grid(square_size, square_size) {};
 
 /**
  * Grid::Grid(width, height)
@@ -72,13 +72,20 @@ Grid::Grid(unsigned int square_size) : Grid(square_size, square_size) {}; //OK
  * @param height
  *      The height of the grid.
  */
-Grid::Grid(unsigned int width, unsigned int height) : width(width), height(height) //OK
+Grid::Grid(unsigned int width, unsigned int height) : width(width), height(height)
 {
-	for (size_t i = 0; i < this->height; i++)
+	if (width < 0 || height < 0)
 	{
-		for (size_t j = 0; j < this->width; j++)
+		std::cout << "bad input \n";
+		return;
+	}
+	else {
+		for (size_t i = 0; i < this->height; i++)
 		{
-			cells.push_back(Cell::DEAD);
+			for (size_t j = 0; j < this->width; j++)
+			{
+				cells.push_back(Cell::DEAD);
+			}
 		}
 	}
 }
@@ -106,7 +113,7 @@ Grid::Grid(unsigned int width, unsigned int height) : width(width), height(heigh
  * @return
  *      The width of the grid.
  */
-unsigned int Grid::get_width() const //ok
+unsigned int Grid::get_width() const
 {
 	return this->width;
 }
@@ -134,7 +141,7 @@ unsigned int Grid::get_width() const //ok
  * @return
  *      The height of the grid.
  */
-unsigned int Grid::get_height() const //ok
+unsigned int Grid::get_height() const
 {
 	return this->height;
 }
@@ -162,7 +169,7 @@ unsigned int Grid::get_height() const //ok
  * @return
  *      The number of total cells.
  */
-unsigned int Grid::get_total_cells() const //ok
+unsigned int Grid::get_total_cells() const
 {
 	return this->width * this->height;
 }
@@ -190,7 +197,7 @@ unsigned int Grid::get_total_cells() const //ok
  * @return
  *      The number of alive cells.
  */
-unsigned int Grid::get_alive_cells() const //ok
+unsigned int Grid::get_alive_cells() const
 {
 	int count = 0;
 	for (size_t i = 0; i < this->height; i++)
@@ -226,7 +233,7 @@ unsigned int Grid::get_alive_cells() const //ok
  * @return
  *      The number of dead cells.
  */
-unsigned int Grid::get_dead_cells() const //ok
+unsigned int Grid::get_dead_cells() const
 {
 	int count = 0;
 	for (size_t i = 0; i < this->height; i++)
@@ -256,7 +263,7 @@ unsigned int Grid::get_dead_cells() const //ok
  * @param square_size
  *      The new edge size for both the width and height of the grid.
  */
-void Grid::resize(unsigned int square_size) //not working
+void Grid::resize(int square_size)
 {
 	resize(square_size, square_size);
 }
@@ -281,8 +288,10 @@ void Grid::resize(unsigned int square_size) //not working
  * @param new_height
  *      The new height for the grid.
  */
-void Grid::resize(unsigned int width, unsigned int height) //ok
+void Grid::resize(int width, int height)
 {
+	if ((int)width < 0 || (int)height < 0) return;
+
 	// create new matrix for the cells
 	std::vector<Cell> newCells;
 	// transfers and populates the new matrix
@@ -321,7 +330,7 @@ void Grid::resize(unsigned int width, unsigned int height) //ok
  * @return
  *      The 1d offset from the start of the data array where the desired cell is located.
  */
-unsigned int Grid::get_index(unsigned int x, unsigned int y) const //ok
+unsigned int Grid::get_index(int x, int y) const
 {
 	return x * this->width + y;
 }
@@ -354,9 +363,23 @@ unsigned int Grid::get_index(unsigned int x, unsigned int y) const //ok
  * @throws
  *      std::exception or sub-class if x,y is not a valid coordinate within the grid.
  */
-Cell Grid::get(unsigned int x, unsigned int y) const //maybe ok
+Cell Grid::get(int x, int y)const
 {
-	return this->operator()(x, y);
+	if (validCoordinates(x, y))
+	{
+		//std::string msg = "Not a valid coordinate for the grid";
+		//msg += " h=" + std::to_string(this->height);
+		//msg += " w=" + std::to_string(this->width);
+		//msg += " this coords->" + std::to_string(x);
+		//msg += ":" + std::to_string(y);
+		//std::cout << msg << std::endl;
+		throw std::exception();
+	}
+	else
+	{
+		return this->operator()(x, y);
+	}
+
 }
 
 /**
@@ -386,9 +409,22 @@ Cell Grid::get(unsigned int x, unsigned int y) const //maybe ok
  * @throws
  *      std::exception or sub-class if x,y is not a valid coordinate within the grid.
  */
-void Grid::set(unsigned int x, unsigned int y, Cell value) // ok
+void Grid::set(int x, int y, Cell value)
 {
-	this->operator()(x, y) = value;
+	if (validCoordinates(x, y))
+	{
+		//std::string msg = "Not a valid coordinate for the grid";
+		//msg += " h=" + std::to_string(this->height);
+		//msg += " w=" + std::to_string(this->width);
+		//msg += " this coords->" + std::to_string(x);
+		//msg += ":" + std::to_string(y);
+		//std::cout << msg << std::endl;
+		throw std::exception();
+	}
+	else
+	{
+		this->operator()(x, y) = value;
+	}
 }
 
 /**
@@ -426,10 +462,22 @@ void Grid::set(unsigned int x, unsigned int y, Cell value) // ok
  * @throws
  *      std::runtime_error or sub-class if x,y is not a valid coordinate within the grid.
  */
-Cell& Grid::operator()(unsigned int x, unsigned int y) //ok
+Cell& Grid::operator()(int x, int y)
 {
-	//inverting coordinates to fit with the rest of the system
-	return cells[get_index(y, x)];
+	if (validCoordinates(x, y))
+	{
+		//std::string msg = "Not a valid coordinate for the grid";
+		//msg += " h=" + std::to_string(this->height);
+		//msg += " w=" + std::to_string(this->width);
+		//msg += " this coords->" + std::to_string(x);
+		//msg += ":" + std::to_string(y);
+		//std::cout << msg << std::endl;
+		throw std::runtime_error("Not a valid coordinate for the grid");
+	}
+	else
+	{
+		return cells[get_index(y, x)];
+	}
 }
 
 /**
@@ -462,10 +510,22 @@ Cell& Grid::operator()(unsigned int x, unsigned int y) //ok
  * @throws
  *      std::exception or sub-class if x,y is not a valid coordinate within the grid.
  */
-const Cell Grid::operator()(unsigned int x, unsigned int y)const //ok
+const Cell Grid::operator()(int x, int y)const
 {
-	//inverting coordinates to fit with the rest of the system
-	return cells[get_index(y, x)];
+	if (validCoordinates(x, y))
+	{
+		//std::string msg = "Not a valid coordinate for the grid";
+		//msg += " h=" + std::to_string(this->height);
+		//msg += " w=" + std::to_string(this->width);
+		//msg += " this coords->" + std::to_string(x);
+		//msg += ":" + std::to_string(y);
+		//std::cout << msg << std::endl;
+		throw std::runtime_error("Not a valid coordinate for the grid");
+	}
+	else
+	{
+		return cells[get_index(y, x)];
+	}
 }
 
 /**
@@ -502,17 +562,39 @@ const Cell Grid::operator()(unsigned int x, unsigned int y)const //ok
  *      std::exception or sub-class if x0,y0 or x1,y1 are not valid coordinates within the grid
  *      or if the crop window has a negative size.
  */
-Grid Grid::crop(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1) const //ok
+Grid Grid::crop(int x0, int y0, int x1, int y1) const
 {
-	Grid newGrid = Grid(x1 - x0, y1 - y0);
-	for (size_t i = x0; i < x1; i++)
+	if (validCoordinates(x0, y0) && validCoordinates(x1, y1))
 	{
-		for (size_t j = y0; j < y1; j++)
-		{
-			newGrid(i - x0, j - y0) = this->operator()(j, i);
-		}
+		//std::string msg = "Not a valid coordinate for the grid";
+		//msg += " h=" + std::to_string(this->height);
+		//msg += " w=" + std::to_string(this->width);
+		//msg += " this coords->" + std::to_string(x);
+		//msg += ":" + std::to_string(y);
+		//std::cout << msg << std::endl;
+		throw std::exception();
 	}
-	return newGrid;
+	else if (x0 > x1 || y0 > y1)
+	{
+		//std::string msg = "Not a valid crop size";
+		//msg += " h=" + std::to_string(this->height);
+		//msg += " w=" + std::to_string(this->width);
+		//msg += " this coords->" + std::to_string(x);
+		//msg += ":" + std::to_string(y);
+		//std::cout << msg << std::endl;
+		throw std::exception();
+	}
+	else {
+		Grid newGrid = Grid(x1 - x0, y1 - y0);
+		for (size_t i = x0; i < x1; i++)
+		{
+			for (size_t j = y0; j < y1; j++)
+			{
+				newGrid(i - x0, j - y0) = this->operator()(j, i);
+			}
+		}
+		return newGrid;
+	}
 }
 
 /**
@@ -552,16 +634,34 @@ Grid Grid::crop(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int 
  * @throws
  *      std::exception or sub-class if the other grid being placed does not fit within the bounds of the current grid.
  */
-void Grid::merge(Grid other, unsigned int  x0, unsigned int  y0, bool alive_only) //ok
+void Grid::merge(Grid other, int  x0, int  y0, bool alive_only) //ok
 {
-	for (size_t i = 0; i < other.get_height(); i++)
+	if (validCoordinates(x0, y0))
 	{
-		for (size_t j = 0; j < other.get_width(); j++)
+		std::cout << "Not a valid coordinate for the grid \n";
+		//msg += " h=" + std::to_string(this->height);
+		//msg += " w=" + std::to_string(this->width);
+		//msg += " this coords->" + std::to_string(x);
+		//msg += ":" + std::to_string(y);
+		//std::cout << msg << std::endl;    
+		throw std::exception();
+	}
+	else if (other.get_height() > this->height - x0 || other.get_width() > this->width - y0)
+	{
+		//std::string msg = "Cannot fit other grid into current";
+		std::cout << "can't fit \n";
+		throw std::exception();
+	}
+	else {
+		for (size_t i = 0; i < other.get_height(); i++)
 		{
-			if (other(j, i) == Cell::ALIVE) this->operator()(j + y0, i + x0) = Cell::ALIVE;
-			else if (alive_only == false)
+			for (size_t j = 0; j < other.get_width(); j++)
 			{
-				this->operator()(j, i) = Cell::DEAD;
+				if (other(j, i) == Cell::ALIVE) this->operator()(j + y0, i + x0) = Cell::ALIVE;
+				else if (alive_only == false)
+				{
+					this->operator()(j, i) = Cell::DEAD;
+				}
 			}
 		}
 	}
@@ -589,7 +689,7 @@ void Grid::merge(Grid other, unsigned int  x0, unsigned int  y0, bool alive_only
    * @return
    *      Returns a copy of the grid that has been rotated.
    */
-Grid Grid::rotate(int rotation) const //not working
+Grid Grid::rotate(int rotation) const
 {
 	//prep for rotation
 	int caseId = rotation % 4;
@@ -755,4 +855,21 @@ std::ostream& operator<<(std::ostream& output_stream, const Grid& grid) //ok
 	}
 
 	return output_stream << output;
+}
+/**
+	* Simple private helper function to determine if a pair of coordinates sit within
+	* the current grid layout. Callable from const context.
+	*
+	* @param x
+	*      x coordinate
+	*
+	* @param y
+	*      y coordinate
+	*
+	* @return
+	*      Returns a reference to the output stream to enable operator chaining.
+	*/
+bool Grid::validCoordinates(int x, int y) const
+{
+	return (x < 0 || y < 0 || x >= (int)this->width || y >= (int)this->height);
 }
