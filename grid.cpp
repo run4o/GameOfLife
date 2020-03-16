@@ -76,8 +76,7 @@ Grid::Grid(unsigned int width, unsigned int height) : width(width), height(heigh
 {
 	if (width < 0 || height < 0)
 	{
-		std::cout << "bad input \n";
-		return;
+		throw std::invalid_argument("Cannot create a grid with a negative or 0 dimension");
 	}
 	else {
 		for (size_t i = 0; i < this->height; i++)
@@ -88,6 +87,16 @@ Grid::Grid(unsigned int width, unsigned int height) : width(width), height(heigh
 			}
 		}
 	}
+}
+
+/**
+ * Deconstructor, clearing all data from the grid.
+ */
+Grid::~Grid()
+{
+	cells.clear();
+	width = 0;
+	height = 0;
 }
 
 /**
@@ -265,7 +274,14 @@ unsigned int Grid::get_dead_cells() const
  */
 void Grid::resize(int square_size)
 {
-	resize(square_size, square_size);
+	try
+	{
+		resize(square_size, square_size);
+	}
+	catch (const std::invalid_argument & e)
+	{
+		throw e;
+	}
 }
 
 /**
@@ -290,28 +306,32 @@ void Grid::resize(int square_size)
  */
 void Grid::resize(int width, int height)
 {
-	if ((int)width < 0 || (int)height < 0) return;
-
-	// create new matrix for the cells
-	std::vector<Cell> newCells;
-	// transfers and populates the new matrix
-	for (size_t i = 0; i < height; i++)
+	if (width < 0 || height < 0)
 	{
-		for (size_t j = 0; j < width; j++)
+		throw std::invalid_argument("Cannot create a grid with a negative dimension");
+	}
+	else {
+		// create new matrix for the cells
+		std::vector<Cell> newCells;
+		// transfers and populates the new matrix
+		for (int i = 0; i < height; i++)
 		{
-			if (i < this->height && j < this->width)
+			for (int j = 0; j < width; j++)
 			{
-				newCells.push_back(this->operator()(j, i));
-			}
-			else
-			{
-				newCells.push_back(Cell::DEAD);
+				if (i < (int)this->height && j < (int)this->width)
+				{
+					newCells.push_back(this->operator()(j, i));
+				}
+				else
+				{
+					newCells.push_back(Cell::DEAD);
+				}
 			}
 		}
+		this->width = width;
+		this->height = height;
+		this->cells = newCells;
 	}
-	this->width = width;
-	this->height = height;
-	this->cells = newCells;
 }
 
 /**
@@ -367,13 +387,7 @@ Cell Grid::get(int x, int y)const
 {
 	if (validCoordinates(x, y))
 	{
-		//std::string msg = "Not a valid coordinate for the grid";
-		//msg += " h=" + std::to_string(this->height);
-		//msg += " w=" + std::to_string(this->width);
-		//msg += " this coords->" + std::to_string(x);
-		//msg += ":" + std::to_string(y);
-		//std::cout << msg << std::endl;
-		throw std::exception();
+		throw std::invalid_argument("Invalid coordinates");
 	}
 	else
 	{
@@ -413,13 +427,7 @@ void Grid::set(int x, int y, Cell value)
 {
 	if (validCoordinates(x, y))
 	{
-		//std::string msg = "Not a valid coordinate for the grid";
-		//msg += " h=" + std::to_string(this->height);
-		//msg += " w=" + std::to_string(this->width);
-		//msg += " this coords->" + std::to_string(x);
-		//msg += ":" + std::to_string(y);
-		//std::cout << msg << std::endl;
-		throw std::exception();
+		throw std::invalid_argument("Invalid coordinates");
 	}
 	else
 	{
@@ -466,13 +474,7 @@ Cell& Grid::operator()(int x, int y)
 {
 	if (validCoordinates(x, y))
 	{
-		//std::string msg = "Not a valid coordinate for the grid";
-		//msg += " h=" + std::to_string(this->height);
-		//msg += " w=" + std::to_string(this->width);
-		//msg += " this coords->" + std::to_string(x);
-		//msg += ":" + std::to_string(y);
-		//std::cout << msg << std::endl;
-		throw std::runtime_error("Not a valid coordinate for the grid");
+		throw std::runtime_error("Invalid coordinates");
 	}
 	else
 	{
@@ -514,12 +516,6 @@ const Cell Grid::operator()(int x, int y)const
 {
 	if (validCoordinates(x, y))
 	{
-		//std::string msg = "Not a valid coordinate for the grid";
-		//msg += " h=" + std::to_string(this->height);
-		//msg += " w=" + std::to_string(this->width);
-		//msg += " this coords->" + std::to_string(x);
-		//msg += ":" + std::to_string(y);
-		//std::cout << msg << std::endl;
 		throw std::runtime_error("Not a valid coordinate for the grid");
 	}
 	else
@@ -566,29 +562,17 @@ Grid Grid::crop(int x0, int y0, int x1, int y1) const
 {
 	if (validCoordinates(x0, y0) && validCoordinates(x1, y1))
 	{
-		//std::string msg = "Not a valid coordinate for the grid";
-		//msg += " h=" + std::to_string(this->height);
-		//msg += " w=" + std::to_string(this->width);
-		//msg += " this coords->" + std::to_string(x);
-		//msg += ":" + std::to_string(y);
-		//std::cout << msg << std::endl;
-		throw std::exception();
+		throw std::invalid_argument("Invalid coordinates");
 	}
 	else if (x0 > x1 || y0 > y1)
 	{
-		//std::string msg = "Not a valid crop size";
-		//msg += " h=" + std::to_string(this->height);
-		//msg += " w=" + std::to_string(this->width);
-		//msg += " this coords->" + std::to_string(x);
-		//msg += ":" + std::to_string(y);
-		//std::cout << msg << std::endl;
-		throw std::exception();
+		throw std::invalid_argument("Negative crop");
 	}
 	else {
 		Grid newGrid = Grid(x1 - x0, y1 - y0);
-		for (size_t i = x0; i < x1; i++)
+		for (int i = x0; i < x1; i++)
 		{
-			for (size_t j = y0; j < y1; j++)
+			for (int j = y0; j < y1; j++)
 			{
 				newGrid(i - x0, j - y0) = this->operator()(j, i);
 			}
@@ -638,19 +622,11 @@ void Grid::merge(Grid other, int  x0, int  y0, bool alive_only) //ok
 {
 	if (validCoordinates(x0, y0))
 	{
-		std::cout << "Not a valid coordinate for the grid \n";
-		//msg += " h=" + std::to_string(this->height);
-		//msg += " w=" + std::to_string(this->width);
-		//msg += " this coords->" + std::to_string(x);
-		//msg += ":" + std::to_string(y);
-		//std::cout << msg << std::endl;    
-		throw std::exception();
+		throw std::invalid_argument("Invalid coordinates");
 	}
 	else if (other.get_height() > this->height - x0 || other.get_width() > this->width - y0)
 	{
-		//std::string msg = "Cannot fit other grid into current";
-		std::cout << "can't fit \n";
-		throw std::exception();
+		throw std::invalid_argument("Cannot fit merge");
 	}
 	else {
 		for (size_t i = 0; i < other.get_height(); i++)
@@ -856,6 +832,7 @@ std::ostream& operator<<(std::ostream& output_stream, const Grid& grid) //ok
 
 	return output_stream << output;
 }
+
 /**
 	* Simple private helper function to determine if a pair of coordinates sit within
 	* the current grid layout. Callable from const context.

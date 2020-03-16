@@ -41,6 +41,7 @@ public:
 	explicit Grid();
 	explicit Grid(unsigned int square_size);
 	explicit Grid(unsigned int width, unsigned int height);
+	~Grid();
 	unsigned int get_width()const;
 	unsigned int get_height()const;
 	unsigned int get_total_cells()const;
