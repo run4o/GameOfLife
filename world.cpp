@@ -101,7 +101,7 @@ World::World(int width, int height)
  * @param initial_state
  *      The state of the constructed world.
  */
-World::World(Grid initial_state) :current(initial_state), next(initial_state.rotate(0)) {}
+World::World(Grid initial_state) : current(initial_state), next(initial_state) {}
 
 /**
  * World::get_width()
@@ -359,33 +359,37 @@ void World::resize(int new_width, int new_height)
 unsigned int World::count_neighbours(int x, int y, bool toroidal)
 {
 	int count = 0;
-	for (int i = x - 1; i <= x + 1; i++)
+	for (int i = y - 1; i <= y + 1; i++)
 	{
-		for (int j = y - 1; i <= y + 1; i++)
+		for (int j = x - 1; j <= x + 1; j++)
 		{
-			if (i != x && j != y)
+
+			if (i == y && j == x)
 			{
-				if (toroidal)
+				j++;
+			}
+
+			if (toroidal)
+			{
+				int newI = i;
+				int newJ = j;
+				if (!validCoordinates(i, j))
 				{
-					int newI = i;
-					int newJ = j;
-					if (!validCoordinates(x, y))
-					{
-						if (i < 0) newI = this->get_height() - 1;
-						if (j < 0) newJ = this->get_width() - 1;
-						if (i >= this->get_height())   newI = 0;
-						if (j >= this->get_width())  newJ = 0;
-					}
-					if (current(newI, newJ) == Cell::ALIVE && !(i != x && j != y)) count++;
+					if (i < 0) newI = this->get_width() - 1;
+					if (j < 0) newJ = this->get_height() - 1;
+					if (i >= (int)this->get_width())   newI = 0;
+					if (j >= (int)this->get_height())  newJ = 0;
 				}
-				else
-				{
-					if (validCoordinates(x, y) && !(i != x && j != y))
-					{
-						if (current(i, j) == Cell::ALIVE) count++;
-					}
+
+				if (current(newI, newJ) == Cell::ALIVE) count++;
+			}
+			else
+			{
+				if (validCoordinates(i, j)) {
+					if (current(i, j) == Cell::ALIVE) count++;
 				}
 			}
+
 		}
 	}
 	return count;
@@ -418,18 +422,58 @@ bool World::validCoordinates(int x, int y)
  *      Optional parameter. If true then the step will consider the grid as a torus, where the left edge
  *      wraps to the right edge and the top to the bottom. Defaults to false.
  */
+void World::step(bool toroidal)
+{
+	next = current.rotate(0);
+	for (size_t i = 0; i < this->get_height(); i++)
+	{
+		for (size_t j = 0; j < this->get_width(); j++)
+		{
+			int alive_neighbours = count_neighbours(i, j, toroidal);
+			if (current(j, i) == Cell::ALIVE)
+			{
+				if (alive_neighbours < 2 || alive_neighbours > 3)
+				{
+					next(j, i) = Cell::DEAD;
+				}
+				//else
+				//{
+				//	next(j, i) = Cell::ALIVE;
+				//}
+			}
+			if (current(j, i) == Cell::DEAD)
+			{
+				if (alive_neighbours == 3)
+				{
+					next(j, i) = Cell::ALIVE;
+				}
+				//else
+				//{
+				//	next(j, i) = Cell::DEAD;
+				//}
+			}
+		}
+	}
+	std::swap(next, current);
+}
 
-
- /**
-  * World::advance(steps, toroidal)
-  *
-  * Advance multiple steps in the Game of Life.
-  * Should be implemented by invoking World::step(toroidal).
-  *
-  * @param steps
-  *      The number of steps to advance the world forward.
-  *
-  * @param toroidal
-  *      Optional parameter. If true then the step will consider the grid as a torus, where the left edge
-  *      wraps to the right edge and the top to the bottom. Defaults to false.
-  */
+/**
+ * World::advance(steps, toroidal)
+ *
+ * Advance multiple steps in the Game of Life.
+ * Should be implemented by invoking World::step(toroidal).
+ *
+ * @param steps
+ *      The number of steps to advance the world forward.
+ *
+ * @param toroidal
+ *      Optional parameter. If true then the step will consider the grid as a torus, where the left edge
+ *      wraps to the right edge and the top to the bottom. Defaults to false.
+ */
+void World::advance(int steps, bool toroidal)
+{
+	for (int i = 0; i < steps; i++)
+	{
+		step(toroidal);
+	}
+}

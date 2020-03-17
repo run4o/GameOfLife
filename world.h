@@ -30,7 +30,7 @@ class World {
 private:
 	Grid current;
 	Grid next;
-	unsigned int count_neighbours(int x, int y, bool toroidal); //alive 
+	unsigned int count_neighbours(int x, int y, bool toroidal);
 	bool validCoordinates(int x, int y);
 public:
 	World();
@@ -45,7 +45,7 @@ public:
 	Grid& get_state();
 	void resize(int square_size);
 	void resize(int new_width, int new_height);
-	void step(bool toroidal);
-	void advance(int steps, bool toroidal);
-	
+	void step(bool toroidal = false);
+	void advance(int steps, bool toroidal = false);
+
 };
