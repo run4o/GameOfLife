@@ -79,7 +79,7 @@ World::World(int square_size) : World(square_size, square_size) {}
 World::World(int width, int height)
 {
 	current = Grid(width, height);
-	next = current.rotate(0);
+	next = Grid(width, height);
 }
 
 /**
@@ -294,7 +294,14 @@ Grid& World::get_state()
  */
 void World::resize(int square_size)
 {
-	resize(square_size, square_size);
+	try
+	{
+		resize(square_size, square_size);
+	}
+	catch (const std::invalid_argument & e)
+	{
+		throw e;
+	}
 }
 
 /**
@@ -321,8 +328,15 @@ void World::resize(int square_size)
  */
 void World::resize(int new_width, int new_height)
 {
-	current.resize(new_width, new_height);
-	next.resize(new_width, new_height);
+	if (new_width < 0 || new_height < 0)
+	{
+		throw std::invalid_argument("Cannot create a grid with a negative dimension");
+	}
+	else
+	{
+		current.resize(new_width, new_height);
+		next.resize(new_width, new_height);
+	}
 }
 
 /**

@@ -21,12 +21,6 @@
   *      - These buffers should be swapped using std::swap after each update step.
   */
 class World {
-
-	// How to draw an owl:
-	//      Step 1. Draw a circle.
-	//      Step 2. Draw the rest of the owl.
-
-
 private:
 	Grid current;
 	Grid next;

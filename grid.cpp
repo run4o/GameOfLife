@@ -74,17 +74,15 @@ Grid::Grid(unsigned int square_size) : Grid(square_size, square_size) {};
  */
 Grid::Grid(unsigned int width, unsigned int height) : width(width), height(height)
 {
+	cells.resize(this->get_total_cells(), Cell::DEAD);
 	if (width < 0 || height < 0)
 	{
 		throw std::invalid_argument("Cannot create a grid with a negative or 0 dimension");
 	}
 	else {
-		for (size_t i = 0; i < this->height; i++)
+		for (size_t i = 0; i < cells.size(); i++)
 		{
-			for (size_t j = 0; j < this->width; j++)
-			{
-				cells.push_back(Cell::DEAD);
-			}
+			cells[i] = Cell::DEAD;
 		}
 	}
 }
@@ -209,12 +207,9 @@ unsigned int Grid::get_total_cells() const
 unsigned int Grid::get_alive_cells() const
 {
 	int count = 0;
-	for (size_t i = 0; i < this->height; i++)
+	for (size_t i = 0; i < cells.size(); i++)
 	{
-		for (size_t j = 0; j < this->width; j++)
-		{
-			if (this->operator()(j, i) == Cell::ALIVE) count++;
-		}
+		if (cells[i] == Cell::ALIVE) count++;
 	}
 	return count;
 }
@@ -245,12 +240,9 @@ unsigned int Grid::get_alive_cells() const
 unsigned int Grid::get_dead_cells() const
 {
 	int count = 0;
-	for (size_t i = 0; i < this->height; i++)
+	for (size_t i = 0; i < cells.size(); i++)
 	{
-		for (size_t j = 0; j < this->width; j++)
-		{
-			if (this->operator()(j, i) == Cell::DEAD) count++;
-		}
+		if (cells[i] == Cell::DEAD) count++;
 	}
 	return count;
 }
@@ -310,9 +302,10 @@ void Grid::resize(int width, int height)
 	{
 		throw std::invalid_argument("Cannot create a grid with a negative dimension");
 	}
-	else {
+	else
+	{
 		// create new matrix for the cells
-		std::vector<Cell> newCells;
+		std::vector<Cell> newCells(width * height);
 		// transfers and populates the new matrix
 		for (int i = 0; i < height; i++)
 		{
@@ -320,11 +313,11 @@ void Grid::resize(int width, int height)
 			{
 				if (i < (int)this->height && j < (int)this->width)
 				{
-					newCells.push_back(this->operator()(j, i));
+					newCells[i * width + j] = this->operator()(j, i);
 				}
 				else
 				{
-					newCells.push_back(Cell::DEAD);
+					newCells[i * width + j] = Cell::DEAD;
 				}
 			}
 		}
@@ -352,7 +345,7 @@ void Grid::resize(int width, int height)
  */
 unsigned int Grid::get_index(int x, int y) const
 {
-	return x * this->width + y;
+	return y * this->width + x;
 }
 
 /**
@@ -478,7 +471,7 @@ Cell& Grid::operator()(int x, int y)
 	}
 	else
 	{
-		return cells[get_index(y, x)];
+		return cells[get_index(x, y)];
 	}
 }
 
@@ -520,7 +513,7 @@ const Cell Grid::operator()(int x, int y)const
 	}
 	else
 	{
-		return cells[get_index(y, x)];
+		return cells[get_index(x, y)];
 	}
 }
 
@@ -701,14 +694,14 @@ Grid Grid::rotate(int rotation) const
 	switch (caseId)
 	{
 	case 1:
-		newY = newGrid.get_width() - 1;
+		newX = newGrid.get_width() - 1;
 		break;
 	case 2:
-		newX = newGrid.get_height() - 1;
-		newY = newGrid.get_width() - 1;
+		newY = newGrid.get_height() - 1;
+		newX = newGrid.get_width() - 1;
 		break;
 	case 3:
-		newX = newGrid.get_height() - 1;
+		newY = newGrid.get_height() - 1;
 		break;
 	default:
 		break;
@@ -720,22 +713,22 @@ Grid Grid::rotate(int rotation) const
 		for (size_t j = 0; j < this->width; j++)
 		{
 			//copies cell to new location
-			newGrid(newY, newX) = this->operator()(j, i);
+			newGrid(newX, newY) = this->operator()(j, i);
 
 			//updates location params
 			switch (caseId)
 			{
 			case 1:
-				newX++;
+				newY++;
 				break;
 			case 2:
-				newY--;
-				break;
-			case 3:
 				newX--;
 				break;
+			case 3:
+				newY--;
+				break;
 			default:
-				newY++;
+				newX++;
 				break;
 			}
 
@@ -745,20 +738,20 @@ Grid Grid::rotate(int rotation) const
 		switch (caseId)
 		{
 		case 1:
-			newX = 0;
-			newY--;
+			newY = 0;
+			newX--;
 			break;
 		case 2:
-			newX--;
-			newY = newGrid.get_width() - 1;
+			newY--;
+			newX = newGrid.get_width() - 1;
 			break;
 		case 3:
-			newX = newGrid.get_height() - 1;
-			newY++;
+			newY = newGrid.get_height() - 1;
+			newX++;
 			break;
 		default:
-			newY = 0;
-			newX++;
+			newX = 0;
+			newY++;
 			break;
 		}
 	}
@@ -804,6 +797,7 @@ std::ostream& operator<<(std::ostream& output_stream, const Grid& grid) //ok
 {
 	std::string output = "";
 	bool border = false;
+
 	for (int i = -1; i < (int)grid.get_height() + 1; i++, border = false)
 	{
 		if (i == -1 || i == (int)grid.get_height()) {
