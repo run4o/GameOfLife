@@ -408,6 +408,7 @@ unsigned int World::count_neighbours(int x, int y, bool toroidal)
 	}
 	return count;
 }
+
 /**
 * Checks if coordinates are within the world
 */
