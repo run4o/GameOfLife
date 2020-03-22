@@ -28,27 +28,28 @@
 #include <fstream>
 #include "zoo.h"
 #include <iostream>
+#include <bitset>
 
- /**
-  * Zoo::glider()
-  *
-  * Construct a 3x3 grid containing a glider.
-  * https://www.conwaylife.com/wiki/Glider
-  *
-  * @example
-  *
-  *      // Print a glider in a Grid the size of its bounding box.
-  *      std::cout << Zoo::glider() << std::endl;
-  *
-  *      +---+
-  *      | # |
-  *      |  #|
-  *      |###|
-  *      +---+
-  *
-  * @return
-  *      Returns a Grid containing a glider.
-  */
+/**
+ * Zoo::glider()
+ *
+ * Construct a 3x3 grid containing a glider.
+ * https://www.conwaylife.com/wiki/Glider
+ *
+ * @example
+ *
+ *      // Print a glider in a Grid the size of its bounding box.
+ *      std::cout << Zoo::glider() << std::endl;
+ *
+ *      +---+
+ *      | # |
+ *      |  #|
+ *      |###|
+ *      +---+
+ *
+ * @return
+ *      Returns a Grid containing a glider.
+ */
 Grid Zoo::glider()
 {
 	Grid glider = Grid(3, 3);
@@ -114,12 +115,16 @@ Grid Zoo::r_pentomino()
  */
 Grid Zoo::light_weight_spaceship()
 {
-	Grid glider = Grid(3, 3);
+	Grid glider = Grid(5, 4);
 	glider(0, 1) = Cell::ALIVE;
+	glider(0, 2) = Cell::ALIVE;
+	glider(0, 3) = Cell::ALIVE;
 	glider(1, 0) = Cell::ALIVE;
-	glider(1, 1) = Cell::ALIVE;
-	glider(1, 2) = Cell::ALIVE;
-	glider(2, 0) = Cell::ALIVE;
+	glider(1, 3) = Cell::ALIVE;
+	glider(2, 3) = Cell::ALIVE;
+	glider(3, 3) = Cell::ALIVE;
+	glider(4, 0) = Cell::ALIVE;
+	glider(4, 2) = Cell::ALIVE;
 	return glider;
 }
 
@@ -149,7 +154,7 @@ Grid Zoo::light_weight_spaceship()
  */
 Grid Zoo::load_ascii(std::string path)
 {
-	std::ifstream in(path);
+	std::ifstream in(path, std::ifstream::in);
 	std::string line = "";
 	if (in.is_open())
 	{
@@ -219,7 +224,7 @@ void Zoo::save_ascii(std::string path, Grid grid)
 		{
 			for (size_t j = 0; j < grid.get_width(); j++)
 			{
-				out << grid(j, i);
+				out << (char)grid(j, i);
 			}
 			//ending line
 			out << "\n";
@@ -229,6 +234,23 @@ void Zoo::save_ascii(std::string path, Grid grid)
 	else {
 		throw std::runtime_error("Cannot open file");
 	}
+}
+
+//Helper function to convert 4 bytes into integer
+int convert_to_int(std::string data)
+{
+	int integer = 0;
+	for (size_t i = 0; i < sizeof(int); i++)
+	{
+		std::string  byte = data.substr(24 - i * 8, 8);
+		for (int k = 0; k < 8; k++) {
+			integer = integer << 1;
+			if (byte[k] == '1') {
+				integer++;
+			}
+		}
+	}
+	return integer;
 }
 
 /**
@@ -253,34 +275,125 @@ void Zoo::save_ascii(std::string path, Grid grid)
  *          - The file cannot be opened.
  *          - The file ends unexpectedly.
  */
+Grid Zoo::load_binary(std::string path)
+{
+	std::ifstream in(path, std::ifstream::binary);
+	if (in.is_open())
+	{
+		std::ifstream input(path, std::ios::binary);
+		std::string bits = "";
+		char c;
+		using bitRaeder = std::bitset<8>;
+		while (in.get(c))
+		{
+			using byte = unsigned char;
+			bits += bitRaeder(byte(c)).to_string();
+		}
+		in.close();
+		unsigned int width = convert_to_int(bits.substr(0, 32));
+		unsigned int height = convert_to_int(bits.substr(32, 32));
+		bits = bits.substr(64);
+		Grid toAdd = Grid(width, height);
+		for (size_t i = 0, cellIndex = 0; cellIndex < toAdd.get_total_cells(); i++)
+		{
+			if ((i + 1) * 8 > bits.size()) throw std::runtime_error("File ends unexpectedly.");
+			std::string byte = bits.substr(i * 8, 8);
+			for (size_t j = 0; j < 8 && cellIndex < toAdd.get_total_cells(); j++, cellIndex++)
+			{
+				//reversing the byte
+				if (byte[7 - j] == '1')
+				{
+					toAdd(cellIndex % width, cellIndex / width) = Cell::ALIVE;
+				}
+			}
+		}
+		return toAdd;
 
+	}
+	else {
+		throw std::runtime_error("Cannot open file");
+	}
+}
 
- /**
-  * Zoo::save_binary(path, grid)
-  *
-  * Save a grid as an binary .bgol file according to the specified file format.
-  * Should be implemented using std::ofstream.
-  *
-  * @example
-  *
-  *      // Make an 8x8 grid
-  *      Grid grid(8);
-  *
-  *      // Save a grid to an binary file in a directory
-  *      try {
-  *          Zoo::save_binary("path/to/file.bgol", grid);
-  *      }
-  *      catch (const std::exception &ex) {
-  *          std::cerr << ex.what() << std::endl;
-  *      }
-  *
-  * @param path
-  *      The std::string path to the file to write to.
-  *
-  * @param grid
-  *      The grid to be written out to file.
-  *
-  * @throws
-  *      Throws std::runtime_error or sub-class if the file cannot be opened.
-  */
+char* convert_cell_to_binary(std::string data)
+{
+	char binary = 0;
+	for (int k = 0; k < 8; k++) {
+		binary = binary << 1;
+		if (data[k] == '1') {
+			binary++;
+		}
+	}
+	char* pointer = new char(binary);
+	return pointer;
+}
 
+/**
+ * Zoo::save_binary(path, grid)
+ *
+ * Save a grid as an binary .bgol file according to the specified file format.
+ * Should be implemented using std::ofstream.
+ *
+ * @example
+ *
+ *      // Make an 8x8 grid
+ *      Grid grid(8);
+ *
+ *      // Save a grid to an binary file in a directory
+ *      try {
+ *          Zoo::save_binary("path/to/file.bgol", grid);
+ *      }
+ *      catch (const std::exception &ex) {
+ *          std::cerr << ex.what() << std::endl;
+ *      }
+ *
+ * @param path
+ *      The std::string path to the file to write to.
+ *
+ * @param grid
+ *      The grid to be written out to file.
+ *
+ * @throws
+ *      Throws std::runtime_error or sub-class if the file cannot be opened.
+ */
+void Zoo::save_binary(std::string path, Grid grid)
+{
+	std::ofstream out(path, std::ofstream::binary);
+	if (out.is_open())
+	{
+		int width = grid.get_width();
+		int height = grid.get_width();
+		out.write((char*)&width, sizeof(int));
+		out.write((char*)&height, sizeof(int));
+		int i = 0;
+		int bytesAdded = 0;
+		while (i < grid.get_total_cells()) {
+			std::string byte = "00000000";
+			for (size_t j = 0; j < 8 && i < grid.get_total_cells(); j++, i++)
+			{
+				if (grid(i / width, i % width) == Cell::ALIVE)
+				{
+					byte[7 - j] = '1';
+				}
+				else
+				{
+					byte[7 - j] = '0';
+				}
+			}
+			out.write(convert_cell_to_binary(byte), sizeof(char));
+			bytesAdded++;
+		}
+
+		//fills the last byte with 0s
+		while (bytesAdded % 4 != 0)
+		{
+			out.write(convert_cell_to_binary("00000000"), sizeof(char));
+			std::cout << "adding 1 \n";
+			bytesAdded++;
+		}
+		out.close();
+	}
+	else {
+		throw std::runtime_error("Cannot open file");
+	}
+}

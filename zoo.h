@@ -9,10 +9,10 @@
  * @date March, 2020
  */
 #pragma once
-#include "grid.h"
+
 
  // Add the minimal number of includes you need in order to declare the namespace.
- // #include ...
+#include "grid.h"
 
  /**
   * Declare the interface of the Zoo namespace for constructing lifeforms and saving and loading them from file.
@@ -23,4 +23,6 @@ namespace Zoo {
 	Grid light_weight_spaceship();
 	Grid load_ascii(std::string path);
 	void save_ascii(std::string path, Grid grid);
+    Grid load_binary(std::string path);
+    void save_binary(std::string path, Grid grid);
 };
