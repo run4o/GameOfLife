@@ -553,7 +553,7 @@ const Cell Grid::operator()(int x, int y)const
  */
 Grid Grid::crop(int x0, int y0, int x1, int y1) const
 {
-	if (!(validCoordinates(x0, y0) || validCoordinates(x1, y1)))
+	if (!validCoordinates(x0, y0) || !validCoordinates(x1 - 1, y1 - 1))
 	{
 		throw std::invalid_argument("Invalid coordinates");
 	}
@@ -567,7 +567,8 @@ Grid Grid::crop(int x0, int y0, int x1, int y1) const
 		{
 			for (int j = y0; j < y1; j++)
 			{
-				newGrid(i - x0, j - y0) = this->operator()(j, i);
+
+				newGrid(i - x0, j - y0) = this->operator()(i, j);
 			}
 		}
 		return newGrid;
