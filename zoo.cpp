@@ -29,7 +29,7 @@
 #include "zoo.h"
 #include <iostream>
 #include <bitset>
-
+#include <math.h>
 /**
  * Zoo::glider()
  *
@@ -158,8 +158,8 @@ Grid Zoo::load_ascii(std::string path)
 	std::string line = "";
 	if (in.is_open())
 	{
-		int width;
-		int height;
+		unsigned int width;
+		unsigned int height;
 		in >> width >> height;
 		Grid toAdd = Grid(width, height);
 		for (size_t i = 0; i < height && !in.eof(); i++)
@@ -294,13 +294,21 @@ Grid Zoo::load_binary(std::string path)
 		unsigned int height = convert_to_int(bits.substr(32, 32));
 		bits = bits.substr(64);
 		Grid toAdd = Grid(width, height);
+
+		//Taking each byte then seperatly and creating the grid
 		for (size_t i = 0, cellIndex = 0; cellIndex < toAdd.get_total_cells(); i++)
 		{
-			if ((i + 1) * 8 > bits.size()) throw std::runtime_error("File ends unexpectedly.");
+			//Check if file format is ok(if we have next byte)
+			if ((i + 1) * 8 > bits.size())
+			{
+				throw std::runtime_error("File ends unexpectedly.");
+			}
+			//load next byte
 			std::string byte = bits.substr(i * 8, 8);
+			//reversing the byte to write
 			for (size_t j = 0; j < 8 && cellIndex < toAdd.get_total_cells(); j++, cellIndex++)
 			{
-				//reversing the byte
+
 				if (byte[7 - j] == '1')
 				{
 					toAdd(cellIndex % width, cellIndex / width) = Cell::ALIVE;
@@ -361,17 +369,21 @@ void Zoo::save_binary(std::string path, Grid grid)
 	std::ofstream out(path, std::ofstream::binary);
 	if (out.is_open())
 	{
-		int width = grid.get_width();
-		int height = grid.get_width();
+		unsigned int width = grid.get_width();
+		unsigned int height = grid.get_width();
 		out.write((char*)&width, sizeof(int));
 		out.write((char*)&height, sizeof(int));
-		int i = 0;
-		int bytesAdded = 0;
-		while (i < grid.get_total_cells()) {
+		unsigned int i = 0;
+		//calculate how many bytes we have to write roundUp(cells/8).
+		unsigned int bytesAdded = ceil((double)grid.get_total_cells() / 8);
+		for (size_t k = 0; k < bytesAdded; k++)
+		{
+			//default byte
 			std::string byte = "00000000";
+			//cycle only if within grid
 			for (size_t j = 0; j < 8 && i < grid.get_total_cells(); j++, i++)
 			{
-				if (grid(i / width, i % width) == Cell::ALIVE)
+				if (grid(i % width, i / width) == Cell::ALIVE)
 				{
 					byte[7 - j] = '1';
 				}
@@ -381,15 +393,6 @@ void Zoo::save_binary(std::string path, Grid grid)
 				}
 			}
 			out.write(convert_cell_to_binary(byte), sizeof(char));
-			bytesAdded++;
-		}
-
-		//fills the last byte with 0s
-		while (bytesAdded % 4 != 0)
-		{
-			out.write(convert_cell_to_binary("00000000"), sizeof(char));
-			std::cout << "adding 1 \n";
-			bytesAdded++;
 		}
 		out.close();
 	}
