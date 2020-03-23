@@ -60,7 +60,6 @@ World::World() : World(0) {}
  */
 World::World(int square_size) : World(square_size, square_size) {}
 
-
 /**
  * World::World(width, height)
  *
@@ -205,7 +204,7 @@ unsigned int World::get_total_cells()
  *      const World &read_only_world = world;
  *
  *      // Print the number of alive cells in the worlds current state grid to the console
- *      std::cout << read_only_world.get_alive_cells() << std::endl;
+f
  *
  * @return
  *      The number of alive cells.
@@ -238,7 +237,6 @@ unsigned int World::get_alive_cells()
  * @return
  *      The number of dead cells.
  */
-
 unsigned int World::get_dead_cells()
 {
 	return current.get_dead_cells();
