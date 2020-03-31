@@ -89,6 +89,7 @@ Grid::Grid(unsigned int width, unsigned int height) : width(width), height(heigh
 
 /**
  * Deconstructor, clearing all data from the grid.
+ * Returning grid to default constructor state.
  */
 Grid::~Grid()
 {
@@ -307,11 +308,11 @@ void Grid::resize(int width, int height)
 		// create new matrix for the cells
 		std::vector<Cell> newCells(width * height);
 		// transfers and populates the new matrix
-		for (int i = 0; i < height; i++)
+		for (size_t i = 0; i < height; i++)
 		{
-			for (int j = 0; j < width; j++)
+			for (size_t j = 0; j < width; j++)
 			{
-				if (i < (int)this->height && j < (int)this->width)
+				if (i < this->height && j < this->width)
 				{
 					newCells[i * width + j] = this->operator()(j, i);
 				}
@@ -612,7 +613,7 @@ Grid Grid::crop(int x0, int y0, int x1, int y1) const
  * @throws
  *      std::exception or sub-class if the other grid being placed does not fit within the bounds of the current grid.
  */
-void Grid::merge(Grid other, int  x0, int  y0, bool alive_only) //ok
+void Grid::merge(Grid& other, int  x0, int  y0, bool alive_only) //ok
 {
 	if (!validCoordinates(x0, y0))
 	{

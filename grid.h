@@ -50,7 +50,7 @@ public:
 	Cell& operator ()(int x, int y);
 	const Cell operator ()(int x, int y)const;
 	Grid crop(int x0, int y0, int x1, int  y1)const;
-	void merge(Grid other, int  x0, int  y0, bool alive_only = false);
+	void merge(Grid& other, int  x0, int  y0, bool alive_only = false);
 	Grid rotate(int rotation)const;
 	friend std::ostream& operator<<(std::ostream& output_stream, const Grid& grid);
 };
