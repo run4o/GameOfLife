@@ -619,7 +619,7 @@ void Grid::merge(Grid other, int  x0, int  y0, bool alive_only) //ok
 	{
 		throw std::invalid_argument("Invalid coordinates");
 	}
-	else if (other.get_height() > this->height - x0 || other.get_width() > this->width - y0)
+	else if (other.get_height() > this->height - y0 || other.get_width() > this->width - x0)
 	{
 		throw std::invalid_argument("Cannot fit merge");
 	}
@@ -628,7 +628,7 @@ void Grid::merge(Grid other, int  x0, int  y0, bool alive_only) //ok
 		{
 			for (size_t j = 0; j < other.get_width(); j++)
 			{
-				if (other(j, i) == Cell::ALIVE) this->operator()(j + y0, i + x0) = Cell::ALIVE;
+				if (other(j, i) == Cell::ALIVE) this->operator()(j + x0, i + y0) = Cell::ALIVE;
 				else if (alive_only == false)
 				{
 					this->operator()(j, i) = Cell::DEAD;
