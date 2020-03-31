@@ -43,14 +43,14 @@ public:
 	unsigned int get_total_cells()const;
 	unsigned int get_alive_cells()const;
 	unsigned int get_dead_cells()const;
-	void resize(int square_size);
-	void resize(int width, int height);
+	void resize(unsigned int square_size);
+	void resize(unsigned int width, unsigned int height);
 	Cell get(int x, int y)const;
 	void set(int x, int y, Cell value);
 	Cell& operator ()(int x, int y);
 	const Cell operator ()(int x, int y)const;
 	Grid crop(int x0, int y0, int x1, int  y1)const;
-	void merge(Grid& other, int  x0, int  y0, bool alive_only = false);
+	void merge(Grid other, int  x0, int  y0, bool alive_only = false);
 	Grid rotate(int rotation)const;
 	friend std::ostream& operator<<(std::ostream& output_stream, const Grid& grid);
 };

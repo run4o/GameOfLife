@@ -265,7 +265,7 @@ unsigned int Grid::get_dead_cells() const
  * @param square_size
  *      The new edge size for both the width and height of the grid.
  */
-void Grid::resize(int square_size)
+void Grid::resize(unsigned int square_size)
 {
 	try
 	{
@@ -297,7 +297,7 @@ void Grid::resize(int square_size)
  * @param new_height
  *      The new height for the grid.
  */
-void Grid::resize(int width, int height)
+void Grid::resize(unsigned int width, unsigned int height)
 {
 	if (width < 0 || height < 0)
 	{
@@ -613,7 +613,7 @@ Grid Grid::crop(int x0, int y0, int x1, int y1) const
  * @throws
  *      std::exception or sub-class if the other grid being placed does not fit within the bounds of the current grid.
  */
-void Grid::merge(Grid& other, int  x0, int  y0, bool alive_only) //ok
+void Grid::merge(Grid other, int  x0, int  y0, bool alive_only) //ok
 {
 	if (!validCoordinates(x0, y0))
 	{
