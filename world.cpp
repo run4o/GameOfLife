@@ -437,11 +437,11 @@ bool World::validCoordinates(int x, int y)
  */
 void World::step(bool toroidal)
 {
-	next = current.rotate(0);
 	for (size_t i = 0; i < this->get_height(); i++)
 	{
 		for (size_t j = 0; j < this->get_width(); j++)
 		{
+			next(j, i) = current(j, i);
 			int alive_neighbours = count_neighbours(i, j, toroidal);
 			if (current(j, i) == Cell::ALIVE)
 			{
@@ -449,10 +449,6 @@ void World::step(bool toroidal)
 				{
 					next(j, i) = Cell::DEAD;
 				}
-				//else
-				//{
-				//	next(j, i) = Cell::ALIVE;
-				//}
 			}
 			if (current(j, i) == Cell::DEAD)
 			{
@@ -460,10 +456,7 @@ void World::step(bool toroidal)
 				{
 					next(j, i) = Cell::ALIVE;
 				}
-				//else
-				//{
-				//	next(j, i) = Cell::DEAD;
-				//}
+
 			}
 		}
 	}
