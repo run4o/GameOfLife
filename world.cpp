@@ -397,7 +397,8 @@ unsigned int World::count_neighbours(int x, int y, bool toroidal)
 			}
 			else
 			{
-				if (validCoordinates(i, j)) {
+				if (validCoordinates(i, j))
+				{
 					if (current(i, j) == Cell::ALIVE) count++;
 				}
 			}
