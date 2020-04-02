@@ -284,18 +284,23 @@ Grid Zoo::load_binary(std::string path)
 		std::string bits = "";
 		char c;
 		using bitRaeder = std::bitset<8>;
+		//reads the file
 		while (in.get(c))
 		{
 			using byte = unsigned char;
 			bits += bitRaeder(byte(c)).to_string();
 		}
 		in.close();
+		//loads the grid size
+
 		unsigned int width = convert_to_int(bits.substr(0, 32));
 		unsigned int height = convert_to_int(bits.substr(32, 32));
-		bits = bits.substr(64);
+		//input.read((char*)&width, 4);
 		Grid toAdd = Grid(width, height);
+		//crops out the size bits
+		bits = bits.substr(64);
 
-		//Taking each byte then seperatly and creating the grid
+		//Reading each byte, and loading the data in the grid
 		for (size_t i = 0, cellIndex = 0; cellIndex < toAdd.get_total_cells(); i++)
 		{
 			//Check if file format is ok(if we have next byte)
@@ -316,24 +321,27 @@ Grid Zoo::load_binary(std::string path)
 			}
 		}
 		return toAdd;
-
 	}
 	else {
 		throw std::runtime_error("Cannot open file");
 	}
 }
 
-char* convert_cell_to_binary(std::string data)
+// Convert the created string to a char* holding the byte
+char* convert_byte(std::string data)
 {
 	char binary = 0;
-	for (int k = 0; k < 8; k++) {
+	for (int k = 0; k < 8; k++)
+	{
 		binary = binary << 1;
-		if (data[k] == '1') {
+		if (data[k] == '1')
+		{
 			binary++;
 		}
 	}
 	char* pointer = new char(binary);
 	return pointer;
+
 }
 
 /**
@@ -373,10 +381,9 @@ void Zoo::save_binary(std::string path, Grid grid)
 		unsigned int height = grid.get_width();
 		out.write((char*)&width, sizeof(int));
 		out.write((char*)&height, sizeof(int));
-		unsigned int i = 0;
 		//calculate how many bytes we have to write roundUp(cells/8).
 		unsigned int bytesAdded = ceil((double)grid.get_total_cells() / 8);
-		for (size_t k = 0; k < bytesAdded; k++)
+		for (size_t k = 0, i = 0; k < bytesAdded; k++)
 		{
 			//default byte
 			std::string byte = "00000000";
@@ -387,12 +394,10 @@ void Zoo::save_binary(std::string path, Grid grid)
 				{
 					byte[7 - j] = '1';
 				}
-				else
-				{
-					byte[7 - j] = '0';
-				}
 			}
-			out.write(convert_cell_to_binary(byte), sizeof(char));
+			char* bits = convert_byte(byte);
+			out.write(bits, sizeof(char));
+			delete bits;
 		}
 		out.close();
 	}
