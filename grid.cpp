@@ -812,14 +812,16 @@ std::ostream& operator<<(std::ostream& output_stream, const Grid& grid) //ok
 			{
 				borderSymbol = '+';
 			}
-			if (j == -1 || j == (int)grid.get_width()) {
+			if (j == -1 || j == (int)grid.get_width()) 
+            {
 				output += borderSymbol;
 			}
 			else if (border == true)
 			{
 				output += "-";
 			}
-			else {
+			else 
+            {
 				output += grid(j, i);
 			}
 		}
