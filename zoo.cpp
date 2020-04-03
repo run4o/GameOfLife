@@ -27,9 +27,9 @@
  // #include ...
 #include <fstream>
 #include "zoo.h"
-#include <iostream>
 #include <bitset>
-#include <math.h>
+#include<math.h>
+
 /**
  * Zoo::glider()
  *
