@@ -1,0 +1,2 @@
+All test pass, both game_of_life and game_of_life_simple are working using the provided inputs
+Binary file loading and saving is probably not the best possible solution.
